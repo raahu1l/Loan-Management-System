@@ -62,7 +62,7 @@ The project uses MySQL database.
 Run the SQL file provided:
 
 ```text
-loan_management.sql
+loanman.sql
 ```
 
 ## Modules
