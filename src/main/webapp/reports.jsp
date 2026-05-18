@@ -311,7 +311,24 @@ body{
 
 <div class="hero">
 
+<div class="d-flex justify-content-between align-items-center">
+
+<div>
+
 <h2>Reports & Analytics</h2>
+
+</div>
+
+<a href="ExportReportServlet"
+class="btn btn-danger">
+
+<i class="bi bi-file-earmark-pdf"></i>
+
+Export PDF
+
+</a>
+
+</div>
 
 </div>
 

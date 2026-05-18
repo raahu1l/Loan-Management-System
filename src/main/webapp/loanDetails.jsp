@@ -52,6 +52,80 @@ if(r > 0 && duration > 0){
 double totalPay = emi * duration;
 
 double totalInterest = totalPay - amount;
+
+/* PAYMENTS */
+
+double totalPaid = 0;
+
+PreparedStatement payPs =
+con.prepareStatement(
+"SELECT * FROM payments WHERE loan_id=? ORDER BY payment_date DESC"
+);
+
+payPs.setInt(1, id);
+
+ResultSet payRs = payPs.executeQuery();
+
+/* TOTAL PAID */
+
+while(payRs.next()){
+
+    totalPaid +=
+    payRs.getDouble("amount_paid");
+}
+
+/* REMAINING BALANCE */
+
+double remainingBalance =
+totalPay - totalPaid;
+
+if(remainingBalance < 0){
+
+    remainingBalance = 0;
+}
+
+/* PROGRESS */
+
+double progress = 0;
+
+if(totalPay > 0){
+
+    progress =
+    (totalPaid / totalPay) * 100;
+}
+
+if(progress > 100){
+
+    progress = 100;
+}
+
+/* AUTO CLOSE */
+
+if(remainingBalance <= 0 &&
+!status.equals("Closed")){
+
+    PreparedStatement closePs =
+    con.prepareStatement(
+    "UPDATE loans SET status='Closed' WHERE id=?"
+    );
+
+    closePs.setInt(1, id);
+
+    closePs.executeUpdate();
+
+    status = "Closed";
+}
+
+/* RELOAD PAYMENT HISTORY */
+
+payPs =
+con.prepareStatement(
+"SELECT * FROM payments WHERE loan_id=? ORDER BY payment_date DESC"
+);
+
+payPs.setInt(1, id);
+
+payRs = payPs.executeQuery();
 %>
 
 <!DOCTYPE html>
@@ -72,8 +146,6 @@ body{
     font-family:'Segoe UI';
 }
 
-/* SIDEBAR */
-
 .sidebar{
     width:250px;
     height:100vh;
@@ -91,8 +163,6 @@ body{
     justify-content:space-between;
 }
 
-/* LOGO */
-
 .logo{
     display:flex;
     align-items:center;
@@ -109,8 +179,6 @@ body{
 .logo i{
     font-size:28px;
 }
-
-/* LINKS */
 
 .sidebar a{
     display:flex;
@@ -142,8 +210,6 @@ body{
     width:24px;
 }
 
-/* IMAGE */
-
 .sidebar-img{
     text-align:center;
     padding-top:20px;
@@ -155,14 +221,10 @@ body{
     opacity:0.95;
 }
 
-/* MAIN */
-
 .main{
     margin-left:250px;
     min-height:100vh;
 }
-
-/* HERO */
 
 .hero{
     background:linear-gradient(180deg,#3b0764,#4c1d95);
@@ -186,13 +248,9 @@ body{
     font-size:18px;
 }
 
-/* CONTENT */
-
 .content{
     padding:35px;
 }
-
-/* METRIC CARD */
 
 .metric-card{
     background:white;
@@ -204,12 +262,6 @@ body{
     box-shadow:0 10px 24px rgba(0,0,0,0.05);
 
     height:100%;
-
-    transition:0.2s;
-}
-
-.metric-card:hover{
-    transform:translateY(-3px);
 }
 
 .metric-label{
@@ -224,11 +276,7 @@ body{
     font-weight:700;
 
     color:#111827;
-
-    line-height:1.2;
 }
-
-/* ACCENTS */
 
 .blue{
     border-top:4px solid #2563eb;
@@ -245,8 +293,6 @@ body{
 .purple{
     border-top:4px solid #7c3aed;
 }
-
-/* STATUS */
 
 .badge-soft{
     padding:10px 18px;
@@ -268,8 +314,6 @@ body{
     background:#fee2e2;
     color:#b91c1c;
 }
-
-/* SECTION */
 
 .section-card{
     background:white;
@@ -305,13 +349,32 @@ body{
     color:#111827;
 }
 
+.btn-primary{
+    background:linear-gradient(135deg,#6366f1,#06b6d4);
+    border:none;
+    border-radius:10px;
+    padding:10px 18px;
+    font-weight:600;
+}
+
+.table th{
+    background:#f8fafc;
+}
+
+.progress{
+    height:22px;
+    border-radius:999px;
+}
+
+.progress-bar{
+    font-weight:600;
+}
+
 </style>
 
 </head>
 
 <body>
-
-<!-- SIDEBAR -->
 
 <div class="sidebar">
 
@@ -355,11 +418,7 @@ body{
 
 </div>
 
-<!-- MAIN -->
-
 <div class="main">
-
-<!-- HERO -->
 
 <div class="hero">
 
@@ -371,11 +430,7 @@ Loan ID #<%= id %> | Detailed Loan Overview
 
 </div>
 
-<!-- CONTENT -->
-
 <div class="content">
-
-<!-- METRICS -->
 
 <div class="row g-4 mb-4">
 
@@ -459,11 +514,7 @@ Closed
 
 </div>
 
-<!-- DETAILS -->
-
 <div class="row g-4">
-
-<!-- FINANCIAL -->
 
 <div class="col-lg-6">
 
@@ -488,11 +539,73 @@ Rs <%= String.format("%,.2f", totalPay) %>
 Rs <%= String.format("%,.2f", totalInterest) %>
 </p>
 
+<p>
+<b>Total Paid:</b>
+Rs <%= String.format("%,.2f", totalPaid) %>
+</p>
+
+<p>
+<b>Remaining Balance:</b>
+Rs <%= String.format("%,.2f", remainingBalance) %>
+</p>
+
+<div class="mt-4">
+
+<div class="d-flex justify-content-between mb-2">
+
+<span>
+Repayment Progress
+</span>
+
+<span>
+<%= String.format("%.0f", progress) %>%
+</span>
+
+</div>
+
+<div class="progress">
+
+<div class="progress-bar bg-success"
+style="width:<%= progress %>%">
+
+<%= String.format("%.0f", progress) %>%
+
+</div>
+
 </div>
 
 </div>
 
-<!-- TERMS -->
+<div class="mt-4">
+
+<% if(status.equals("Closed")){ %>
+
+<button class="btn btn-secondary" disabled>
+
+<i class="bi bi-check-circle"></i>
+
+Loan Fully Paid
+
+</button>
+
+<% } else { %>
+
+<a href="addPayment.jsp?id=<%= id %>"
+class="btn btn-primary">
+
+<i class="bi bi-cash-coin"></i>
+
+Add Payment
+
+</a>
+
+<% } %>
+
+</div>
+
+</div>
+
+</div>
 
 <div class="col-lg-6">
 
@@ -526,6 +639,56 @@ Monthly EMI
 <b>Status:</b>
 <%= status %>
 </p>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="row mt-4">
+
+<div class="col-12">
+
+<div class="section-card">
+
+<h5>
+Payment History
+</h5>
+
+<div class="table-responsive">
+
+<table class="table table-hover align-middle">
+
+<tr>
+<th>Payment Amount</th>
+<th>Payment Date</th>
+</tr>
+
+<%
+while(payRs.next()){
+%>
+
+<tr>
+
+<td>
+Rs <%= String.format("%,.2f",
+payRs.getDouble("amount_paid")) %>
+</td>
+
+<td>
+<%= payRs.getString("payment_date") %>
+</td>
+
+</tr>
+
+<%
+}
+%>
+
+</table>
+
+</div>
 
 </div>
 
