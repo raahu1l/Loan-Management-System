@@ -257,6 +257,11 @@ label{
 <span>EMI Calculator</span>
 </a>
 
+<a href="emiAlerts.jsp">
+<i class="bi bi-bell"></i>
+<span>EMI Alerts</span>
+</a>
+
 </div>
 
 <div class="sidebar-img">

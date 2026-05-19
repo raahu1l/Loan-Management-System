@@ -93,11 +93,17 @@ public class AddPaymentServlet extends HttpServlet {
 
             /* EMI CALCULATION */
 
-            double r = interest / (12 * 100);
+            double r =
+            interest / (12 * 100);
 
             double emi = 0;
 
-            if(r > 0 && duration > 0){
+            if(interest == 0){
+
+                emi =
+                amount / duration;
+
+            } else {
 
                 emi =
                 (amount * r * Math.pow(1 + r, duration)) /
@@ -129,7 +135,7 @@ public class AddPaymentServlet extends HttpServlet {
 
             /* BLOCK OVERPAYMENT */
 
-            if(currentPaid + amountPaid > totalPay){
+            if(currentPaid + amountPaid > totalPay + 1){
 
                 response.sendRedirect(
                 "loanDetails.jsp?id=" + loanId
@@ -158,9 +164,17 @@ public class AddPaymentServlet extends HttpServlet {
             double updatedPaid =
             currentPaid + amountPaid;
 
+            double remaining =
+            totalPay - updatedPaid;
+
+            /* PREVENT NEGATIVE BALANCE */
+
+            if(remaining < 0)
+                remaining = 0;
+
             /* AUTO CLOSE LOAN */
 
-            if(updatedPaid >= totalPay){
+            if(remaining <= 1){
 
                 PreparedStatement closePs =
                 con.prepareStatement(
